@@ -57,6 +57,8 @@ $factory->define(App\Church::class, function (Faker\Generator $faker) {
         'slug' => $slug,
         'category_id' => $faker->numberBetween(1, 4),
         'user_id' => $faker->numberBetween(1, 10),
+        'lat' => $faker->latitude($min = -90, $max = 90),
+        'lng' => $faker->longitude($min = -180, $max = 180),
     ];
 });
 
