@@ -91,3 +91,42 @@ Route::resource('periods', 'PeriodController');
 Route::resource('phones', 'PhoneController');
 
 Route::resource('emails', 'EmailController');
+
+Route::get('/maps', function() {
+	$church = App\Church::find(41);
+	$center_lat = $church->lat;
+	$center_lng = $church->lng;
+	$radius = '';
+
+	// Start XML file, create parent node
+	$dom = new DOMDocument("1.0");
+	$node = $dom->createElement("markers");
+	$parnode = $dom->appendChild($node);
+	
+
+	$query = sprintf("SELECT address, name, lat, lng, ( 3959 * acos( cos( radians('%s') ) * cos( radians( lat ) ) * cos( radians( lng ) - radians('%s') ) + sin( radians('%s') ) * sin( radians( lat ) ) ) ) AS distance FROM churches/* HAVING distance < '%s' ORDER BY distance LIMIT 0 , 20*/",
+	  $center_lat,
+	  $center_lng,
+	  $center_lat,
+	  $radius);
+	$results = DB::select($query);
+	
+	header("Content-type: text/xml");
+	
+	// Iterate through the rows, adding XML nodes for each
+	$i = 0;
+	while($i < count($results))
+	{
+		$node = $dom->createElement("marker");
+		$newnode = $parnode->appendChild($node);
+		$newnode->setAttribute("name", $results[0]->name);
+		$newnode->setAttribute("address", $results[0]->address);
+		$newnode->setAttribute("lat", $results[0]->lat);
+		$newnode->setAttribute("lng", $results[0]->lng);
+		$newnode->setAttribute("distance", $results[0]->distance);
+		$i++;
+	}
+
+	echo $dom->saveXML();
+
+});
